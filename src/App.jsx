@@ -49,15 +49,7 @@ export default function App() {
 
   return (
     <>
-      <SlotMachine playerName={playerName} />
-      <div className="text-center mt-4">
-        <button
-          onClick={logout}
-          className="text-xs text-white underline hover:text-yellow-400"
-        >
-          Switch Player
-        </button>
-      </div>
+      <SlotMachine playerName={playerName} logout={logout} />
     </>
   );
 }

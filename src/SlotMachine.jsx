@@ -9,7 +9,7 @@ import {
 
 const symbols = ["🍒", "🍋", "🔔", "💎", "🐯", "💰"];
 
-export default function SlotMachine({ playerName }) {
+export default function SlotMachine({ playerName, logout }) {
   const [reels, setReels] = useState(["❓", "❓", "❓"]);
   const [spins, setSpins] = useState(0);
   const [coins, setCoins] = useState(100);
@@ -59,10 +59,9 @@ export default function SlotMachine({ playerName }) {
             finalizeSpin(newFinals);
           }
         }
-      }, 200); // slower speed for roll-down
+      }, 200);
     };
 
-    // Spin each reel at high speed, then slow it down
     [0, 1, 2].forEach((i) => {
       intervals[i] = setInterval(() => {
         currentReels[i] = symbols[Math.floor(Math.random() * symbols.length)];
@@ -70,12 +69,11 @@ export default function SlotMachine({ playerName }) {
       }, 100);
     });
 
-    // Stop and slow-roll each reel with delay
-    const stopDelay = [1000, 1600, 2400]; // increasing suspense
+    const stopDelay = [1000, 1600, 2400];
     stopDelay.forEach((delay, i) => {
       setTimeout(() => {
-        clearInterval(intervals[i]); // stop fast spin
-        slowSpin(i, newFinals[i]);   // start slow roll-down
+        clearInterval(intervals[i]);
+        slowSpin(i, newFinals[i]);
       }, delay);
     });
   };
@@ -119,13 +117,19 @@ export default function SlotMachine({ playerName }) {
   };
 
   return (
-    <div className="text-center text-white p-6 bg-gray-900 min-h-screen flex flex-col items-center justify-center space-y-6">
-      <h1 className="text-3xl font-bold">🎰 Slot Machine</h1>
-      <p className="text-lg mb-2">
-        Welcome, <span className="font-semibold">{playerName}</span>
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center px-4 py-6">
+      <h1 className="text-4xl font-bold mb-2 text-center">🎰 Slot Machine</h1>
+
+      <p className="text-lg mb-1 text-center">
+        Welcome, <span className="font-semibold text-yellow-400">{playerName}</span>
       </p>
 
-      <div className="text-6xl flex space-x-4 transition-transform duration-300">
+      <div className="text-md text-gray-300 space-y-1 text-center mb-4">
+        <p>🪙 Coins: <span className="text-white font-medium">{coins}</span></p>
+        <p>🔄 Spins: <span className="text-white font-medium">{spins}</span></p>
+      </div>
+
+      <div className="text-7xl flex justify-center space-x-6 mb-6 transition-transform duration-300">
         {reels.map((symbol, i) => (
           <span
             key={i}
@@ -143,44 +147,53 @@ export default function SlotMachine({ playerName }) {
         disabled={isSpinning || coins <= 0}
         className={`${
           isSpinning || coins <= 0
-            ? "bg-gray-500 cursor-not-allowed"
+            ? "bg-gray-600 cursor-not-allowed"
             : "bg-yellow-400 hover:bg-yellow-500"
-        } text-black font-semibold px-6 py-3 rounded transition`}
+        } text-black font-semibold px-8 py-3 rounded text-lg mb-4`}
       >
         {isSpinning ? "Spinning..." : "Spin"}
       </button>
 
-      <p className="text-lg">{message}</p>
-
-      <div className="text-sm text-gray-300 space-y-1">
-        <p>🪙 Coins: {coins}</p>
-        <p>🔄 Spins: {spins}</p>
-      </div>
+      <p className="text-lg font-semibold text-center min-h-[1.5rem]">{message}</p>
 
       <button
         onClick={handleResetPlayer}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mt-4"
+        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mt-6 text-sm"
       >
         Reset My Stats
       </button>
 
-      <h2 className="text-xl font-bold mt-6 mb-2">🏅 Local Leaderboard</h2>
-      <ul className="mb-4 text-sm">
+      <h2 className="text-2xl font-bold mt-8 mb-2 text-center">🏅 Local Leaderboard</h2>
+
+      <ul className="mb-6 text-sm text-center w-full max-w-md divide-y divide-gray-800 border border-gray-800 rounded-md overflow-hidden">
         {Object.entries(leaderboard)
           .sort(([, a], [, b]) => b.coins - a.coins)
           .map(([name, data]) => (
-            <li key={name}>
-              {name}: {data.coins} coins / {data.spins} spins
+            <li
+              key={name}
+              className="flex justify-center gap-x-6 items-center px-4 py-2 bg-gray-800 hover:bg-gray-700"
+            >
+              <span className="text-yellow-300 font-medium">{name}</span>
+              <span className="text-gray-200">{data.coins} coins / {data.spins} spins</span>
             </li>
           ))}
       </ul>
 
       <button
         onClick={handleResetAll}
-        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm mb-6"
       >
         Reset Leaderboard
       </button>
+
+      <div className="text-center mt-2">
+        <button
+          onClick={logout}
+          className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded"
+        >
+          Switch Player
+        </button>
+      </div>
     </div>
   );
 }
