@@ -17,31 +17,25 @@ export default function SlotMachine() {
   useEffect(() => {
     const saved = Cookies.get("slotPlayer");
     if (saved) setName(saved);
-    fetchGlobalLeaderboard("slot_leaderboard").then((entries) => {
-      setGlobalBoard(entries);
-      const user = entries.find((e) => e.name === saved);
-      if (user) {
-        setCoins(user.coins);
-        setSpins(user.spins);
-      }
-    });
+    fetchAndSetLeaderboard(saved);
   }, []);
+
+  const fetchAndSetLeaderboard = async (userName) => {
+    const entries = await fetchGlobalLeaderboard("slot_leaderboard");
+    setGlobalBoard(entries);
+    const user = entries.find((e) => e.name === userName);
+    if (user) {
+      setCoins(user.coins);
+      setSpins(user.spins);
+    }
+  };
 
   const saveName = () => {
     if (!nameInput.trim()) return;
-    setName(nameInput.trim());
-    Cookies.set("slotPlayer", nameInput.trim());
-    fetchGlobalLeaderboard("slot_leaderboard").then((entries) => {
-      setGlobalBoard(entries);
-      const user = entries.find((e) => e.name === nameInput.trim());
-      if (user) {
-        setCoins(user.coins);
-        setSpins(user.spins);
-      } else {
-        setCoins(100);
-        setSpins(0);
-      }
-    });
+    const trimmed = nameInput.trim();
+    setName(trimmed);
+    Cookies.set("slotPlayer", trimmed);
+    fetchAndSetLeaderboard(trimmed);
   };
 
   const logout = () => {
@@ -125,8 +119,8 @@ export default function SlotMachine() {
     setIsSpinning(false);
 
     const updated = { name, coins: newCoins, spins: newSpins };
-    submitGlobalScore("slot_leaderboard", name, updated);
-    fetchGlobalLeaderboard("slot_leaderboard").then(setGlobalBoard);
+    await submitGlobalScore("slot_leaderboard", name, updated);
+    await fetchAndSetLeaderboard(name);
   };
 
   if (!name) {
