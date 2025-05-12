@@ -166,7 +166,7 @@ export default function SlotMachine() {
       <button
         onClick={spin}
         disabled={isSpinning || coins <= 0}
-        className={`$ {
+        className={`${
           isSpinning || coins <= 0
             ? "bg-gray-600 cursor-not-allowed"
             : "bg-yellow-400 hover:bg-yellow-500"
