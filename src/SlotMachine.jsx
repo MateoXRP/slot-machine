@@ -6,6 +6,10 @@ import {
   resetPlayerStats,
   resetAllPlayers,
 } from "./leaderboard";
+import {
+  submitGlobalScore,
+  fetchGlobalLeaderboard,
+} from "./firebase";
 
 const symbols = ["🍒", "🍋", "🔔", "💎", "🐯", "💰"];
 
@@ -16,6 +20,7 @@ export default function SlotMachine({ playerName, logout }) {
   const [message, setMessage] = useState("");
   const [isSpinning, setIsSpinning] = useState(false);
   const [leaderboard, setLeaderboard] = useState({});
+  const [globalBoard, setGlobalBoard] = useState([]);
 
   useEffect(() => {
     const saved = getLocalLeaderboard();
@@ -24,6 +29,8 @@ export default function SlotMachine({ playerName, logout }) {
       setSpins(saved[playerName].spins);
     }
     setLeaderboard(saved);
+
+    fetchGlobalLeaderboard().then(setGlobalBoard);
   }, [playerName]);
 
   const spin = () => {
@@ -78,7 +85,7 @@ export default function SlotMachine({ playerName, logout }) {
     });
   };
 
-  const finalizeSpin = (finalReels) => {
+  const finalizeSpin = async (finalReels) => {
     const [a, b, c] = finalReels;
     let coinChange = -1;
     let resultMessage = "😢 Try again!";
@@ -100,6 +107,10 @@ export default function SlotMachine({ playerName, logout }) {
 
     const updated = updateLocalLeaderboard(playerName, newCoins, newSpins);
     setLeaderboard(updated);
+
+    await submitGlobalScore(playerName, newCoins, newSpins);
+    const updatedGlobal = await fetchGlobalLeaderboard();
+    setGlobalBoard(updatedGlobal);
   };
 
   const handleResetPlayer = () => {
@@ -177,6 +188,20 @@ export default function SlotMachine({ playerName, logout }) {
               <span className="text-gray-200">{data.coins} coins / {data.spins} spins</span>
             </li>
           ))}
+      </ul>
+
+      <h2 className="text-2xl font-bold mt-8 mb-2 text-center">🌍 Global Leaderboard</h2>
+
+      <ul className="mb-6 text-sm text-center w-full max-w-md divide-y divide-gray-800 border border-gray-800 rounded-md overflow-hidden">
+        {globalBoard.map((player) => (
+          <li
+            key={player.name}
+            className="flex justify-center gap-x-6 items-center px-4 py-2 bg-gray-800 hover:bg-gray-700"
+          >
+            <span className="text-yellow-300 font-medium">{player.name}</span>
+            <span className="text-gray-200">{player.coins} coins / {player.spins} spins</span>
+          </li>
+        ))}
       </ul>
 
       <button
