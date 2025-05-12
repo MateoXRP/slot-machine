@@ -123,10 +123,20 @@ export default function SlotMachine() {
     await fetchAndSetLeaderboard(name);
   };
 
+  const restartWithCoins = async () => {
+    const newCoins = 10;
+    setCoins(newCoins);
+    setMessage("🆕 Restarted with 10 coins!");
+    const updated = { name, coins: newCoins, spins };
+    await submitGlobalScore("slot_leaderboard", name, updated);
+    await fetchAndSetLeaderboard(name);
+  };
+
   if (!name) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
-        <h1 className="text-3xl font-bold mb-4">Play Slot Machine</h1>
+        <h1 className="text-3xl font-bold mb-2 text-center">Play Slot Machine</h1>
+        <div className="text-4xl mb-4">🎰</div>
         <input
           type="text"
           value={nameInput}
@@ -164,12 +174,21 @@ export default function SlotMachine() {
           isSpinning || coins <= 0
             ? "bg-gray-600 cursor-not-allowed"
             : "bg-yellow-400 hover:bg-yellow-500"
-        } text-black font-semibold px-8 py-3 rounded text-lg mb-4`}
+        } text-black font-semibold px-8 py-3 rounded text-lg mb-2`}
       >
         {isSpinning ? "Spinning..." : "Spin"}
       </button>
 
       <p className="text-lg font-semibold text-center min-h-[1.5rem]">{message}</p>
+
+      {coins === 0 && !isSpinning && (
+        <button
+          onClick={restartWithCoins}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mt-2"
+        >
+          Restart with 10 Coins
+        </button>
+      )}
 
       <button onClick={logout} className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-800 my-6">
         Switch Player
