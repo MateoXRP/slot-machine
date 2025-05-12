@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
-import { getLocalLeaderboard, updateLocalLeaderboard, resetPlayerStats, resetAllPlayers } from "./leaderboard";
+import {
+  getLocalLeaderboard,
+  updateLocalLeaderboard,
+  resetPlayerStats,
+  resetAllPlayers,
+} from "./leaderboard";
 
 const symbols = ["🍒", "🍋", "🔔", "💎", "🐯", "💰"];
 
@@ -9,6 +14,7 @@ export default function SlotMachine({ playerName }) {
   const [spins, setSpins] = useState(0);
   const [coins, setCoins] = useState(100);
   const [message, setMessage] = useState("");
+  const [isSpinning, setIsSpinning] = useState(false);
   const [leaderboard, setLeaderboard] = useState({});
 
   useEffect(() => {
@@ -21,30 +27,78 @@ export default function SlotMachine({ playerName }) {
   }, [playerName]);
 
   const spin = () => {
-    if (coins <= 0) {
+    if (coins <= 0 || isSpinning) {
       setMessage("Out of coins! 💸");
       return;
     }
 
-    const newReels = Array.from({ length: 3 }, () => symbols[Math.floor(Math.random() * symbols.length)]);
-    setReels(newReels);
-    const [a, b, c] = newReels;
+    setIsSpinning(true);
+    setMessage("");
 
-    let change = -1;
-    let result = "😢 Try again!";
+    const newFinals = [
+      symbols[Math.floor(Math.random() * symbols.length)],
+      symbols[Math.floor(Math.random() * symbols.length)],
+      symbols[Math.floor(Math.random() * symbols.length)],
+    ];
+
+    const currentReels = [...reels];
+    const intervals = [];
+
+    const slowSpin = (reelIndex, finalSymbol, slowCount = 5) => {
+      let count = 0;
+      const slowInterval = setInterval(() => {
+        currentReels[reelIndex] = symbols[Math.floor(Math.random() * symbols.length)];
+        setReels([...currentReels]);
+        count++;
+        if (count >= slowCount) {
+          clearInterval(slowInterval);
+          currentReels[reelIndex] = finalSymbol;
+          setReels([...currentReels]);
+
+          if (reelIndex === 2) {
+            finalizeSpin(newFinals);
+          }
+        }
+      }, 200); // slower speed for roll-down
+    };
+
+    // Spin each reel at high speed, then slow it down
+    [0, 1, 2].forEach((i) => {
+      intervals[i] = setInterval(() => {
+        currentReels[i] = symbols[Math.floor(Math.random() * symbols.length)];
+        setReels([...currentReels]);
+      }, 100);
+    });
+
+    // Stop and slow-roll each reel with delay
+    const stopDelay = [1000, 1600, 2400]; // increasing suspense
+    stopDelay.forEach((delay, i) => {
+      setTimeout(() => {
+        clearInterval(intervals[i]); // stop fast spin
+        slowSpin(i, newFinals[i]);   // start slow roll-down
+      }, delay);
+    });
+  };
+
+  const finalizeSpin = (finalReels) => {
+    const [a, b, c] = finalReels;
+    let coinChange = -1;
+    let resultMessage = "😢 Try again!";
     if (a === b && b === c) {
-      change = 49;
-      result = "🎉 Jackpot! +50 coins!";
+      coinChange = 49;
+      resultMessage = "🎉 Jackpot! +50 coins!";
     } else if (a === b || b === c || a === c) {
-      change = 9;
-      result = "🥳 You win! +10 coins!";
+      coinChange = 9;
+      resultMessage = "🥳 You win! +10 coins!";
     }
 
-    const newCoins = coins + change;
+    const newCoins = coins + coinChange;
     const newSpins = spins + 1;
+
     setCoins(newCoins);
     setSpins(newSpins);
-    setMessage(result);
+    setMessage(resultMessage);
+    setIsSpinning(false);
 
     const updated = updateLocalLeaderboard(playerName, newCoins, newSpins);
     setLeaderboard(updated);
@@ -67,19 +121,33 @@ export default function SlotMachine({ playerName }) {
   return (
     <div className="text-center text-white p-6 bg-gray-900 min-h-screen flex flex-col items-center justify-center space-y-6">
       <h1 className="text-3xl font-bold">🎰 Slot Machine</h1>
-      <p className="text-lg mb-2">Welcome, <span className="font-semibold">{playerName}</span></p>
+      <p className="text-lg mb-2">
+        Welcome, <span className="font-semibold">{playerName}</span>
+      </p>
 
-      <div className="text-6xl flex space-x-4">
+      <div className="text-6xl flex space-x-4 transition-transform duration-300">
         {reels.map((symbol, i) => (
-          <span key={i}>{symbol}</span>
+          <span
+            key={i}
+            className={`transition-transform duration-150 ${
+              isSpinning ? "animate-pulse" : ""
+            }`}
+          >
+            {symbol}
+          </span>
         ))}
       </div>
 
       <button
         onClick={spin}
-        className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-6 py-3 rounded"
+        disabled={isSpinning || coins <= 0}
+        className={`${
+          isSpinning || coins <= 0
+            ? "bg-gray-500 cursor-not-allowed"
+            : "bg-yellow-400 hover:bg-yellow-500"
+        } text-black font-semibold px-6 py-3 rounded transition`}
       >
-        Spin
+        {isSpinning ? "Spinning..." : "Spin"}
       </button>
 
       <p className="text-lg">{message}</p>
