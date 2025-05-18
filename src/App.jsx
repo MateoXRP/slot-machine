@@ -123,67 +123,92 @@ export default function SlotMachine() {
     await fetchAndSetLeaderboard(name);
   };
 
-  if (!name) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
-        <h1 className="text-3xl font-bold mb-2 text-center">Play Slot Machine</h1>
-        <div className="text-4xl mb-4">🎰</div>
-        <input
-          type="text"
-          value={nameInput}
-          onChange={(e) => setNameInput(e.target.value)}
-          placeholder="Enter your name"
-          className="px-4 py-2 rounded text-black mb-2"
-        />
-        <button onClick={saveName} className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
-          Start Game
-        </button>
-      </div>
-    );
-  }
+  const restartWithCoins = async () => {
+    const newCoins = 10;
+    setCoins(newCoins);
+    setMessage("🆕 Restarted with 10 coins!");
+    const updated = { name, coins: newCoins, spins };
+    await submitGlobalScore("slot_leaderboard", name, updated);
+    await fetchAndSetLeaderboard(name);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-4">🎰 Slot Machine</h1>
-      <p className="mb-2">Welcome, <span className="text-yellow-400 font-semibold">{name}</span></p>
+    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+      <main className="flex-1 flex flex-col items-center justify-center p-4">
+        {!name ? (
+          <>
+            <h1 className="text-3xl font-bold mb-2 text-center">Play Slot Machine</h1>
+            <div className="text-4xl mb-4">🎰</div>
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="Enter your name"
+              className="px-4 py-2 rounded text-black mb-2"
+            />
+            <button onClick={saveName} className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
+              Start Game
+            </button>
+          </>
+        ) : (
+          <>
+            <h1 className="text-3xl font-bold mb-4 text-center">🎰 Slot Machine</h1>
+            <p className="mb-2 text-center">
+              Welcome, <span className="text-yellow-400 font-semibold">{name}</span>
+            </p>
 
-      <div className="text-md text-gray-300 space-y-1 text-center mb-4">
-        <p>🪙 Coins: <span className="text-white font-medium">{coins}</span></p>
-        <p>🔄 Spins: <span className="text-white font-medium">{spins}</span></p>
-      </div>
+            <div className="text-md text-gray-300 space-y-1 text-center mb-4">
+              <p>🪙 Coins: <span className="text-white font-medium">{coins}</span></p>
+              <p>🔄 Spins: <span className="text-white font-medium">{spins}</span></p>
+            </div>
 
-      <div className="text-7xl flex justify-center space-x-6 mb-6 transition-transform duration-300">
-        {reels.map((symbol, i) => (
-          <span key={i}>{symbol}</span>
-        ))}
-      </div>
+            <div className="text-7xl flex justify-center space-x-6 mb-6 transition-transform duration-300">
+              {reels.map((symbol, i) => (
+                <span key={i}>{symbol}</span>
+              ))}
+            </div>
 
-      <button
-        onClick={spin}
-        disabled={isSpinning || coins <= 0}
-        className={`${
-          isSpinning || coins <= 0
-            ? "bg-gray-600 cursor-not-allowed"
-            : "bg-yellow-400 hover:bg-yellow-500"
-        } text-black font-semibold px-8 py-3 rounded text-lg mb-4`}
-      >
-        {isSpinning ? "Spinning..." : "Spin"}
-      </button>
+            <button
+              onClick={spin}
+              disabled={isSpinning || coins <= 0}
+              className={`${
+                isSpinning || coins <= 0
+                  ? "bg-gray-600 cursor-not-allowed"
+                  : "bg-yellow-400 hover:bg-yellow-500"
+              } text-black font-semibold px-8 py-3 rounded text-lg mb-2`}
+            >
+              {isSpinning ? "Spinning..." : "Spin"}
+            </button>
 
-      <p className="text-lg font-semibold text-center min-h-[1.5rem]">{message}</p>
+            <p className="text-lg font-semibold text-center min-h-[1.5rem]">{message}</p>
 
-      <button onClick={logout} className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-800 my-6">
-        Switch Player
-      </button>
+            {coins === 0 && !isSpinning && (
+              <button
+                onClick={restartWithCoins}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mt-2"
+              >
+                Restart with 10 Coins
+              </button>
+            )}
 
-      <h2 className="text-2xl font-bold mb-2">🌍 Global Leaderboard</h2>
-      <ul className="mb-4">
-        {globalBoard.map((player) => (
-          <li key={player.name} className="text-sm">
-            {player.name}: {player.coins} coins / {player.spins} spins
-          </li>
-        ))}
-      </ul>
+            <button
+              onClick={logout}
+              className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-800 my-6"
+            >
+              Switch Player
+            </button>
+
+            <h2 className="text-2xl font-bold mb-2 text-center">🌍 Global Leaderboard</h2>
+            <ul className="mb-4 text-center">
+              {globalBoard.map((player) => (
+                <li key={player.name} className="text-sm">
+                  {player.name}: {player.coins} coins / {player.spins} spins
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </main>
     </div>
   );
 }
